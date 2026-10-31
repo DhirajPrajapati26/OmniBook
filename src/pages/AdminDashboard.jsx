@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -82,14 +82,17 @@ const formatDate = (value) => {
   return Number.isNaN(date.getTime())
     ? "—"
     : date.toLocaleDateString("en-IN", {
-        timeZone: SALON_TIME_ZONE,
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
+      timeZone: SALON_TIME_ZONE,
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 };
 
 export default function AdminDashboard() {
+
+  const navigate = useNavigate();
+
   const [appointments, setAppointments] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,12 +120,17 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error("Dashboard loading error:", err);
 
+      if (err.response?.status === 401) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
       const serverMessage = err.response?.data?.message;
       setError(
         hasLoaded
           ? `Refresh failed${serverMessage ? `: ${serverMessage}` : ". Showing the previously loaded data, which may be out of date."}`
           : serverMessage ||
-              "Could not load dashboard data. Check your admin login and API routes."
+          "Could not load dashboard data. Check your admin login and API routes."
       );
     } finally {
       setLoading(false);
@@ -156,7 +164,7 @@ export default function AdminDashboard() {
     (appointment) => appointment.status === "Cancelled"
   ).length;
 
-  
+
 
   // Exclude cancelled appointments from this recorded-value estimate.
   const totalRevenue = appointments
@@ -557,9 +565,8 @@ export default function AdminDashboard() {
                         <div
                           className="h-full rounded-full bg-[#78977b] transition-all duration-300"
                           style={{
-                            width: `${
-                              (service.count / maxServiceBookings) * 100
-                            }%`,
+                            width: `${(service.count / maxServiceBookings) * 100
+                              }%`,
                           }}
                         />
                       </div>
@@ -682,17 +689,17 @@ export default function AdminDashboard() {
                               <p>
                                 {formatDate(
                                   appointment.appointmentDate ||
-                                    appointment.startTime
+                                  appointment.startTime
                                 )}
                               </p>
                               <p className="mt-1 text-xs text-[#858b82]">
                                 {appointment.startTime
                                   ? new Date(
-                                      appointment.startTime
-                                    ).toLocaleTimeString("en-IN", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })
+                                    appointment.startTime
+                                  ).toLocaleTimeString("en-IN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
                                   : "—"}
                               </p>
                             </td>
@@ -703,10 +710,9 @@ export default function AdminDashboard() {
 
                             <td className="px-6 py-4">
                               <span
-                                className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${
-                                  STATUS_TEXT_COLORS[appointment.status] ||
+                                className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${STATUS_TEXT_COLORS[appointment.status] ||
                                   "bg-[#f0f0eb] text-[#59665a]"
-                                }`}
+                                  }`}
                               >
                                 {appointment.status || "Pending"}
                               </span>
